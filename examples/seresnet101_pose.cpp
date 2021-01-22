@@ -40,8 +40,8 @@ static int detect_posenet(const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
     //      pose_net.export('pose')
     // then mxnet2ncnn
     // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-    posenet.load_param("pose.param");
-    posenet.load_model("pose.bin");
+    posenet.load_param("pose_models/alphapose.param");
+    posenet.load_model("pose_models/alphapose.bin");
 
     int w = bgr.cols;
     int h = bgr.rows;
@@ -54,15 +54,16 @@ static int detect_posenet(const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
     // G' = (G / 255 - 0.456) / 0.224 = (G - 0.456 * 255) / 0.224 / 255
     // B' = (B / 255 - 0.406) / 0.225 = (B - 0.406 * 255) / 0.225 / 255
     const float mean_vals[3] = {0.485f * 255.f, 0.456f * 255.f, 0.406f * 255.f};
-    const float norm_vals[3] = {1 / 0.229f / 255.f, 1 / 0.224f / 255.f, 1 / 0.225f / 255.f};
+    //const float norm_vals[3] = {1 / 0.229f / 255.f, 1 / 0.224f / 255.f, 1 / 0.225f / 255.f};
+    const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor ex = posenet.create_extractor();
 
-    ex.input("data", in);
+    ex.input("input.1", in);
 
     ncnn::Mat out;
-    ex.extract("conv3_fwd", out);
+    ex.extract("1123", out);
 
     // resolve point from heatmap
     keypoints.clear();
@@ -112,7 +113,7 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
         const KeyPoint& p1 = keypoints[joint_pairs[i][0]];
         const KeyPoint& p2 = keypoints[joint_pairs[i][1]];
 
-        if (p1.prob < 0.2f || p2.prob < 0.2f)
+        if (p1.prob < 0.04f || p2.prob < 0.04f)
             continue;
 
         cv::line(image, p1.p, p2.p, cv::Scalar(255, 0, 0), 2);

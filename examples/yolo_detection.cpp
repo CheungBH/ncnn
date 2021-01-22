@@ -39,12 +39,12 @@ static int detect_yolov4(const cv::Mat& bgr, std::vector<Object>& objects)
     // the ncnn model https://drive.google.com/drive/folders/1YzILvh0SKQPS_lrb33dmGNq7aVTKPWS0?usp=sharing
     // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
 #if YOLOV4_TINY
-    yolov4.load_param("det_model/yolo_gray.param");
-    yolov4.load_model("det_model/yolo_gray.bin");
+    yolov4.load_param("det_model/yolo.param");
+    yolov4.load_model("det_model/yolo.bin");
     const int target_size = 416;
 #else
-    yolov4.load_param("det_model/yolo_gray.param");
-    yolov4.load_model("det_model/yolo_gray.bin");
+    yolov4.load_param("det_model/yolo.param");
+    yolov4.load_model("det_model/yolo.bin");
     const int target_size = 416;
 #endif
 

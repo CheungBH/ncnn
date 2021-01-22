@@ -40,8 +40,8 @@ static int detect_posenet(const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
     //      pose_net.export('pose')
     // then mxnet2ncnn
     // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-    posenet.load_param("pose.param");
-    posenet.load_model("pose.bin");
+    posenet.load_param("hand_model/model.param");
+    posenet.load_model("hand_model/model.bin");
 
     int w = bgr.cols;
     int h = bgr.rows;
@@ -55,14 +55,15 @@ static int detect_posenet(const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
     // B' = (B / 255 - 0.406) / 0.225 = (B - 0.406 * 255) / 0.225 / 255
     const float mean_vals[3] = {0.485f * 255.f, 0.456f * 255.f, 0.406f * 255.f};
     const float norm_vals[3] = {1 / 0.229f / 255.f, 1 / 0.224f / 255.f, 1 / 0.225f / 255.f};
+    //const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor ex = posenet.create_extractor();
 
-    ex.input("data", in);
+    ex.input("input.1", in);
 
     ncnn::Mat out;
-    ex.extract("conv3_fwd", out);
+    ex.extract("545", out);
 
     // resolve point from heatmap
     keypoints.clear();
@@ -103,16 +104,16 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
     cv::Mat image = bgr.clone();
 
     // draw bone
-    static const int joint_pairs[16][2] = {
-        {0, 1}, {1, 3}, {0, 2}, {2, 4}, {5, 6}, {5, 7}, {7, 9}, {6, 8}, {8, 10}, {5, 11}, {6, 12}, {11, 12}, {11, 13}, {12, 14}, {13, 15}, {14, 16}
+    static const int joint_pairs[15][2] = {
+        {8, 9}, {11, 12}, {11, 10}, {2, 1}, {1, 0}, {13, 14}, {14, 15}, {3, 4}, {4, 5}, {8, 7}, {7, 6}, {6, 2}, {6, 3}, {8, 12}, {8, 13}
     };
 
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < 15; i++)
     {
         const KeyPoint& p1 = keypoints[joint_pairs[i][0]];
         const KeyPoint& p2 = keypoints[joint_pairs[i][1]];
 
-        if (p1.prob < 0.2f || p2.prob < 0.2f)
+        if (p1.prob < 0.04f || p2.prob < 0.04f)
             continue;
 
         cv::line(image, p1.p, p2.p, cv::Scalar(255, 0, 0), 2);
@@ -125,10 +126,10 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
 
         fprintf(stderr, "%.2f %.2f = %.5f\n", keypoint.p.x, keypoint.p.y, keypoint.prob);
 
-        if (keypoint.prob < 0.2f)
+        if (keypoint.prob < 0.1f)
             continue;
 
-        cv::circle(image, keypoint.p, 3, cv::Scalar(0, 255, 0), -1);
+        cv::circle(image, keypoint.p, 3, cv::Scalar(0, 255, 0), 5);
     }
 
     cv::imshow("image", image);
