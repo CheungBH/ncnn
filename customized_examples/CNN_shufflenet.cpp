@@ -28,8 +28,8 @@ static int detect_shufflenetv2(const cv::Mat& bgr, std::vector<float>& cls_score
 
     // https://github.com/miaow1988/ShuffleNet_V2_pytorch_caffe
     // models can be downloaded from https://github.com/miaow1988/ShuffleNet_V2_pytorch_caffe/releases
-    shufflenetv2.load_param("CNN_models/shufflenet.param");
-    shufflenetv2.load_model("CNN_models/shufflenet.bin");
+    shufflenetv2.load_param("CNN_model/shuffle.param");
+    shufflenetv2.load_model("CNN_model/shuffle.bin");
 
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, bgr.cols, bgr.rows, 224, 224);
 
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     std::vector<float> cls_scores;
     detect_shufflenetv2(m, cls_scores);
 
-    print_topk(cls_scores, 3);
+    print_topk(cls_scores, 2);
 
     return 0;
 }
