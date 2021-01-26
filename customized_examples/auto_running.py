@@ -62,7 +62,7 @@ for idx, (model, image_srcs) in enumerate(visualize_pipeline.items()):
 
     for image_src in image_srcs:
         image_dest = generate_result_path(image_src)
-        exe_cmd = "{} {} {}".format(exe_file, image_src, image_dest)
+        exe_cmd = "./{} {} {}/{}".format(exe_file, image_src, image_dest, model.replace("/", "-"))
         print(exe_cmd)
         # os.system(exe_cmd)
 

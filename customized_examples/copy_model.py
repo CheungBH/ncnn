@@ -21,12 +21,9 @@ def main(args):
         root = "pose_model"
         if "mobile" in src_model:
             dest_model_kw = "mobilepose"
-        elif "alpha" in src_model:
-            dest_model_kw = "alphapose"
+        elif "seresnet101" in src_model:
+            dest_model_kw = "seresenet101_pose"
 
-    elif "hand" in src_model:
-        root = "hand_model"
-        dest_model_kw = "yolo"
 
     dest_param = os.path.join(root, dest_model_kw + ".param")
     dest_bin = os.path.join(root, dest_model_kw + ".bin")
