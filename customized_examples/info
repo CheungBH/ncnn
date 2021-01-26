@@ -1,0 +1,12 @@
+CNN_mobilenet.cpp ---> classfication; mobilenet trained from CNN_classification; use model "CNN_model/mobilenet*"
+CNN_shufflenet.cpp ---> classfication; shufflenet trained from CNN_classification; use model "CNN_model/resnet18*"
+CNN_resnet18.cpp ---> classfication; resnet18 trained from CNN_classification; use model "CNN_model/shuffle*"
+
+yolo_detection.cpp ---> detection; all model trained from yolov3-channel-and-layer-pruning; use model "det_model/yolo*"
+
+
+mm_mobilenet_pose.cpp ---> pose; mobilenet trained from mmpose;
+mm_resnet18_pose.cpp ---> pose; resnet18 trained from mmpose;
+
+mobilepose.cpp ---> pose; mobilenet trained from PoseTrainingPytorch; use models "pose_model/mobilepose*"
+seresnet101_pose.cpp ---> pose; seresnet101 trained from PoseTrainingPytorch; use models "pose_model/seresnet101*"
