@@ -46,3 +46,7 @@ build*/
 .idea
 cmake-build-debug
 cmake-build-release
+
+
+glslang
+1.2.154.0

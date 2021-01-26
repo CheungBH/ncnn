@@ -33,8 +33,9 @@ static int detect_shufflenetv2(const cv::Mat& bgr, std::vector<float>& cls_score
 
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, bgr.cols, bgr.rows, 224, 224);
 
-    const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
-    in.substract_mean_normalize(0, norm_vals);
+    const float mean_vals[3] = {0.485f, 0.456f, 0.406f};
+    const float norm_vals[3] = {1 / 0.229f / 255.f, 1 / 0.224f / 255.f, 1 / 0.225f / 255.f};
+    in.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor ex = shufflenetv2.create_extractor();
 

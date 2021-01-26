@@ -28,15 +28,12 @@ static int detect_shufflenetv2(const cv::Mat& bgr, std::vector<float>& cls_score
 
     // https://github.com/miaow1988/ShuffleNet_V2_pytorch_caffe
     // models can be downloaded from https://github.com/miaow1988/ShuffleNet_V2_pytorch_caffe/releases
-    shufflenetv2.load_param("CNN_models/mobile.param");
-    shufflenetv2.load_model("CNN_models/mobile.bin");
+    shufflenetv2.load_param("CNN_models/shufflenet.param");
+    shufflenetv2.load_model("CNN_models/shufflenet.bin");
 
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, bgr.cols, bgr.rows, 224, 224);
 
-    //const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
-    //in.substract_mean_normalize(0, norm_vals);
-
-    const float mean_vals[3] = {0.485f * 255.f, 0.456f * 255.f, 0.406f * 255.f};
+    const float mean_vals[3] = {0.485f, 0.456f, 0.406f};
     const float norm_vals[3] = {1 / 0.229f / 255.f, 1 / 0.224f / 255.f, 1 / 0.225f / 255.f};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
@@ -45,7 +42,7 @@ static int detect_shufflenetv2(const cv::Mat& bgr, std::vector<float>& cls_score
     ex.input("input.1", in);
 
     ncnn::Mat out;
-    ex.extract("543", out);
+    ex.extract("975", out);
 
     // manually call softmax on the fc output
     // convert result into probability
@@ -117,7 +114,7 @@ int main(int argc, char** argv)
     std::vector<float> cls_scores;
     detect_shufflenetv2(m, cls_scores);
 
-    print_topk(cls_scores, 2);
+    print_topk(cls_scores, 3);
 
     return 0;
 }
