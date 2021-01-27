@@ -20,6 +20,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <vector>
+#include <sys/stat.h>
+#include <iostream>
 
 struct KeyPoint
 {
@@ -27,21 +29,9 @@ struct KeyPoint
     float prob;
 };
 
-static int detect_posenet(const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
+static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
 {
-    ncnn::Net posenet;
 
-    posenet.opt.use_vulkan_compute = true;
-
-    // the simple baseline human pose estimation from gluon-cv
-    // https://gluon-cv.mxnet.io/build/examples_pose/demo_simple_pose.html
-    // mxnet model exported via
-    //      pose_net.hybridize()
-    //      pose_net.export('pose')
-    // then mxnet2ncnn
-    // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-    posenet.load_param("pose_model/seresnet101_pose.param");
-    posenet.load_model("pose_model/seresnet101_pose.bin");
 
     int w = bgr.cols;
     int h = bgr.rows;
@@ -133,24 +123,69 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
     }
 
     cv::imshow("image", image);
-    cv::waitKey(0);
+    cv::waitKey(1);
+    static int s = 0;
+    cv::imwrite("save/result" + std::to_string(s) + ".jpg",image);
+    s++;
 }
 
 int main(int argc, char** argv)
 {
     const char* imagepath = argv[1];
 
-    cv::Mat m = cv::imread(imagepath, 1);
-    if (m.empty())
+    ncnn::Net posenet;
+
+    posenet.opt.use_vulkan_compute = true;
+    posenet.load_param("pose_model/seresnet101.param");
+    posenet.load_model("pose_model/seresnet101.bin");
+    struct stat s;
+    int camera = int(*imagepath) -'0';
+    if (camera == 0)
     {
-        fprintf(stderr, "cv::imread %s failed\n", imagepath);
-        return -1;
+        cv::VideoCapture capture(0);
+        while(true)
+        {
+            cv::Mat m;
+            capture >> m;
+            cv::resize(m,m,cv::Size(416,416));
+            std::vector<KeyPoint> keypoints;
+            detect_posenet(posenet, m, keypoints);
+
+            draw_pose(m, keypoints);
+        }
+    } 
+    else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFREG)
+    {
+        cv::Mat m = cv::imread(imagepath, 1);
+        if (m.empty())
+        {
+            fprintf(stderr, "cv::imread %s failed\n", imagepath);
+            return -1;
+        }
+
+        std::vector<KeyPoint> keypoints;
+        detect_posenet(posenet, m, keypoints);
+
+        draw_pose(m, keypoints);
     }
+    else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFDIR)
+    {
+        std::vector<std::string> fn;
+        cv::glob(imagepath,fn,true);
+        for (int i=0; i<fn.size(); i++)
+        {
+            std::cout<<fn[i]<<std::endl;
+        }
+        for (int i=0; i<fn.size(); i++){
+        cv::Mat m = cv::imread(fn[i], 1);
 
-    std::vector<KeyPoint> keypoints;
-    detect_posenet(m, keypoints);
+        std::vector<KeyPoint> keypoints;
+        detect_posenet(posenet, m, keypoints);
 
-    draw_pose(m, keypoints);
+        draw_pose(m, keypoints);
+    }
+}
+    
 
     return 0;
 }
