@@ -32,32 +32,15 @@ struct KeyPoint
 
 static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
 {
-    // ncnn::Net posenet;
 
-    // posenet.opt.use_vulkan_compute = true;
-
-    // // the simple baseline human pose estimation from gluon-cv
-    // // https://gluon-cv.mxnet.io/build/examples_pose/demo_simple_pose.html
-    // // mxnet model exported via
-    // //      pose_net.hybridize()
-    // //      pose_net.export('pose')
-    // // then mxnet2ncnn
-    // // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-    // posenet.load_param("pose_model/mobilepose.param");
-    // posenet.load_model("pose_model/mobilepose.bin");
 
     int w = bgr.cols;
     int h = bgr.rows;
 
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, w, h, 256, 320);
 
-    // transforms.ToTensor(),
-    // transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-    // R' = (R / 255 - 0.485) / 0.229 = (R - 0.485 * 255) / 0.229 / 255
-    // G' = (G / 255 - 0.456) / 0.224 = (G - 0.456 * 255) / 0.224 / 255
-    // B' = (B / 255 - 0.406) / 0.225 = (B - 0.406 * 255) / 0.225 / 255
     const float mean_vals[3] = {0.485f, 0.456f, 0.406f};
-    //const float norm_vals[3] = {1 / 0.229f / 255.f, 1 / 0.224f / 255.f, 1 / 0.225f / 255.f};
+
     const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
@@ -73,7 +56,7 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
     for (int p = 0; p < out.c; p++)
     {
         const ncnn::Mat m = out.channel(p);
-
+        std::cout << typeid(m).name()<<std::endl;
         float max_prob = 0.f;
         int max_x = 0;
         int max_y = 0;
@@ -138,12 +121,23 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
     cv::imshow("image", image);
     cv::waitKey(1);
     static int s = 0;
-    cv::imwrite("save/result" + std::to_string(s) + ".jpg",image);
+    std::ostringstream out; 
+    std::string save_folder = "save/";
+    std::string img_extension = ".jpg";
+    out << save_folder << s << img_extension;
+    // cv::imwrite("save/result" + std::to_string(s) + ".jpg",image);
+    cv::imwrite(out.str(),image);
     s++;
 }
 
 int main(int argc, char** argv)
-{
+{   
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
+        return -1;
+    }
+
     const char* imagepath = argv[1];
 
     ncnn::Net posenet;
@@ -153,6 +147,7 @@ int main(int argc, char** argv)
     posenet.load_model("pose_model/mobilepose.bin");
     struct stat s;
     int camera = int(*imagepath) -'0';
+    // open camera
     if (camera == 0)
     {
         cv::VideoCapture capture(0);
@@ -166,7 +161,8 @@ int main(int argc, char** argv)
 
             draw_pose(m, keypoints);
         }
-    } 
+    }
+    // test single image 
     else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFREG)
     {
         cv::Mat m = cv::imread(imagepath, 1);
@@ -181,6 +177,7 @@ int main(int argc, char** argv)
 
         draw_pose(m, keypoints);
     }
+    // test img folder
     else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFDIR)
     {
         std::vector<std::string> fn;

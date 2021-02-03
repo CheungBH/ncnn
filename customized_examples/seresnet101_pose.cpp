@@ -22,6 +22,7 @@
 #include <vector>
 #include <sys/stat.h>
 #include <iostream>
+#include <sstream>
 
 struct KeyPoint
 {
@@ -60,7 +61,7 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
     for (int p = 0; p < out.c; p++)
     {
         const ncnn::Mat m = out.channel(p);
-
+        std::cout << typeid(m).name()<<std::endl;
         float max_prob = 0.f;
         int max_x = 0;
         int max_y = 0;
@@ -125,7 +126,12 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
     cv::imshow("image", image);
     cv::waitKey(1);
     static int s = 0;
-    cv::imwrite("save/result" + std::to_string(s) + ".jpg",image);
+    std::ostringstream out; 
+    std::string save_folder = "save/";
+    std::string img_extension = ".jpg";
+    out << save_folder << s << img_extension;
+    // cv::imwrite("save/result" + std::to_string(s) + ".jpg",image);
+    cv::imwrite(out.str(),image);
     s++;
 }
 
