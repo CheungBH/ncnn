@@ -23,6 +23,7 @@
 #include <iostream>
 #include <string>
 #include <sys/stat.h>
+#include <typeinfo>
 
 struct KeyPoint
 {
@@ -85,7 +86,7 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
     return 0;
 }
 
-static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints)
+static cv::Mat draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints)
 {
     cv::Mat image = bgr.clone();
 
@@ -118,26 +119,14 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
         cv::circle(image, keypoint.p, 3, cv::Scalar(0, 255, 0), -1);
     }
 
-    cv::imshow("image", image);
-    cv::waitKey(1);
-    static int s = 0;
-    std::ostringstream out; 
-    std::string save_folder = "save/";
-    std::string img_extension = ".jpg";
-    out << save_folder << s << img_extension;
-    // cv::imwrite("save/result" + std::to_string(s) + ".jpg",image);
-    cv::imwrite(out.str(),image);
-    s++;
+    //cv::imshow("image", image);
+    //cv::waitKey(0);
+    return image;
+
 }
 
 int main(int argc, char** argv)
 {   
-    if (argc != 2)
-    {
-        fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
-        return -1;
-    }
-
     const char* imagepath = argv[1];
 
     ncnn::Net posenet;
@@ -159,7 +148,7 @@ int main(int argc, char** argv)
             std::vector<KeyPoint> keypoints;
             detect_posenet(posenet, m, keypoints);
 
-            draw_pose(m, keypoints);
+            cv::Mat image = draw_pose(m, keypoints);
         }
     }
     // test single image 
@@ -175,11 +164,13 @@ int main(int argc, char** argv)
         std::vector<KeyPoint> keypoints;
         detect_posenet(posenet, m, keypoints);
 
-        draw_pose(m, keypoints);
+        cv::Mat image = draw_pose(m, keypoints);
     }
     // test img folder
     else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFDIR)
     {
+        int img_num = 0;
+        std::string save_folder = argv[2];
         std::vector<std::string> fn;
         cv::glob(imagepath,fn,true);
         for (int i=0; i<fn.size(); i++)
@@ -191,8 +182,14 @@ int main(int argc, char** argv)
 
         std::vector<KeyPoint> keypoints;
         detect_posenet(posenet, m, keypoints);
+        cv::Mat image = draw_pose(m, keypoints);
 
-        draw_pose(m, keypoints);
+        std::ostringstream out; 
+
+        std::string img_extension = ".jpg";
+        out << save_folder << img_num << img_extension;
+        cv::imwrite(out.str(),image);
+        img_num++;
     }
 }
     

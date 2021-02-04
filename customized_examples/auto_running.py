@@ -1,10 +1,11 @@
 import os
 
 visualize_pipeline = {
-    "CNN_model/mobilenet/2020/CNN-CatDog_mobile_sim-opt-fp16": ["images/catdog"],
-    "CNN_model/mobilenet/2020/mobilenet": ["images/catdog"],
-    "CNN_model/resnet18/2020/CNN-CatDog_resnet18_sim-opt-fp16": ["images/catdog"],
-    "pose_model/mobilepose/yoga/yoga_0110/mobilepose.param": ["images/person", "images/yoga"]
+    # "CNN_model/mobilenet/2020/CNN-CatDog_mobile_sim-opt-fp16": ["images/catdog"],
+    # "CNN_model/mobilenet/2020/mobilenet": ["images/catdog"],
+    # "CNN_model/resnet18/2020/CNN-CatDog_resnet18_sim-opt-fp16": ["images/catdog"],
+    "pose_model/mobilepose/yoga/yoga_0110/mobilepose.bin": ["images/person", "images/yoga"],
+    "pose_model/seresnet101/person/coco_0110/seresnet101_pose.bin": ["images/person", "images/yoga"]
 }
 
 
@@ -28,7 +29,7 @@ def select_exe(name):
         if "mobile" in structure:
             exe_name = "mobilepose"
         elif "seresnet101" in structure:
-            exe_name =  "seresnet101_pose"
+            exe_name = "seresnet101_pose"
         else:
             raise ValueError("Wrong name of the model!")
     elif "mm_model_pose" in task:
@@ -62,9 +63,11 @@ for idx, (model, image_srcs) in enumerate(visualize_pipeline.items()):
 
     for image_src in image_srcs:
         image_dest = generate_result_path(image_src)
-        exe_cmd = "./{} {} {}/{}".format(exe_file, image_src, image_dest, model.replace("/", "-"))
+        result_dest = "{}/{}".format(image_dest, model.replace("/", "-"))
+        os.makedirs(result_dest)
+        exe_cmd = "./{} {} {}/".format(exe_file, image_src, result_dest)
         print(exe_cmd)
-        # os.system(exe_cmd)
+        os.system(exe_cmd)
 
     print("---------------Finish processing model {}-------------------\n".format(idx+1))
 
