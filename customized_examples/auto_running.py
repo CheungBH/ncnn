@@ -5,7 +5,9 @@ visualize_pipeline = {
     # "CNN_model/mobilenet/2020/mobilenet": ["images/catdog"],
     # "CNN_model/resnet18/2020/CNN-CatDog_resnet18_sim-opt-fp16": ["images/catdog"],
     "pose_model/mobilepose/yoga/yoga_0110/mobilepose.bin": ["images/person", "images/yoga"],
-    "pose_model/seresnet101/person/coco_0110/seresnet101_pose.bin": ["images/person", "images/yoga"]
+    "pose_model/mobilepose/22/py_mob.param": ["images/person", "images/yoga"],
+    "pose_model/mobilepose/22/py_mob_opt.bin": ["images/person", "images/yoga"],
+    "pose_model/seresnet101/person/coco_0110/seresnet101_pose.bin": ["images/yoga"]
 }
 
 
@@ -57,7 +59,7 @@ for idx, (model, image_srcs) in enumerate(visualize_pipeline.items()):
     model = unify_model_name(model)
     exe_file = select_exe(model)
     copy_cmd = "python copy_model.py {}".format(model)
-    # os.system(copy_cmd)
+    os.system(copy_cmd)
 
     print(copy_cmd)
 

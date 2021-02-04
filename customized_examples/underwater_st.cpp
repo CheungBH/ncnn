@@ -40,11 +40,11 @@
 #include "benchmark.h"
 #endif
 
-#define SPPE_PARAM "pose_models/alphapose.param"
-#define SPPE_MODEL "pose_models/alphapose.bin"
+#define SPPE_PARAM "underwater_model/alphapose.param"
+#define SPPE_MODEL "underwater_model/alphapose.bin"
 
-#define CNN_PARAM "CNN_models/resnet18.param"
-#define CNN_MODEL "CNN_models/resnet18.bin"
+#define CNN_PARAM "underwater_model/resnet18.param"
+#define CNN_MODEL "underwater_model/resnet18.bin"
 
 int sz_boxes = 10;
 int sz_skeletons = 30;
@@ -89,12 +89,12 @@ static int init_yolov4(ncnn::Net* yolov4, int* target_size)
     // the ncnn model https://drive.google.com/drive/folders/1YzILvh0SKQPS_lrb33dmGNq7aVTKPWS0?usp=sharing
     // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
 #ifdef YOLOV4_TINY
-    const char* yolov4_param = "yolov4-tiny-opt.param";
-    const char* yolov4_model = "yolov4-tiny-opt.bin";
+    const char* yolov4_param = "underwater_model/yolov4-tiny-opt.param";
+    const char* yolov4_model = "underwater_model/yolov4-tiny-opt.bin";
     *target_size = 416;
 #else
-    const char* yolov4_param = "yolov4-opt.param";
-    const char* yolov4_model = "yolov4-opt.bin";
+    const char* yolov4_param = "underwater_model/yolov4-opt.param";
+    const char* yolov4_model = "underwater_model/yolov4-opt.bin";
     *target_size = 608;
 #endif
 
