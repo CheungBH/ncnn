@@ -1,5 +1,5 @@
 macro(ncnn_add_example name)
-    add_executable(${name} ${name}.cpp)
+    add_executable(${name} ${name}.cpp json.cpp)
     target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
     target_link_libraries(${name} PRIVATE ncnn ${OpenCV_LIBS})
 

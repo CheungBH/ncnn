@@ -15,21 +15,13 @@
 #include "net.h"
 
 #include <algorithm>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <vector>
 #include <iostream>
 #include <string>
 #include <sys/stat.h>
 #include <typeinfo>
-
-struct KeyPoint
-{
-    cv::Point2f p;
-    float prob;
-};
+#include "json.hpp"
 
 static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
 {
@@ -136,6 +128,8 @@ int main(int argc, char** argv)
     posenet.load_model("pose_model/mobilepose.bin");
     struct stat s;
     int camera = int(*imagepath) -'0';
+    int id = 0;
+
     // open camera
     if (camera == 0)
     {
@@ -148,7 +142,11 @@ int main(int argc, char** argv)
             std::vector<KeyPoint> keypoints;
             detect_posenet(posenet, m, keypoints);
 
+            // write to json
+            json_data::write_json("example.json", "camera", 1, keypoints);
+
             cv::Mat image = draw_pose(m, keypoints);
+
         }
     }
     // test single image 
@@ -164,7 +162,13 @@ int main(int argc, char** argv)
         std::vector<KeyPoint> keypoints;
         detect_posenet(posenet, m, keypoints);
 
+        // write to json
+        json_data::write_json("example.json", imagepath, id, keypoints);
+        id++;
+
         cv::Mat image = draw_pose(m, keypoints);
+        cv::imshow("image", image);
+        cv::waitKey(0);
     }
     // test img folder
     else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFDIR)
@@ -178,20 +182,25 @@ int main(int argc, char** argv)
             std::cout<<fn[i]<<std::endl;
         }
         for (int i=0; i<fn.size(); i++){
-        cv::Mat m = cv::imread(fn[i], 1);
+            cv::Mat m = cv::imread(fn[i], 1);
 
-        std::vector<KeyPoint> keypoints;
-        detect_posenet(posenet, m, keypoints);
-        cv::Mat image = draw_pose(m, keypoints);
+            std::vector<KeyPoint> keypoints;
+            detect_posenet(posenet, m, keypoints);
 
-        std::ostringstream out; 
+            // write to json
+            json_data::write_json("example.json", fn[i], id, keypoints);
+            id++;
 
-        std::string img_extension = ".jpg";
-        out << save_folder << img_num << img_extension;
-        cv::imwrite(out.str(),image);
-        img_num++;
+            cv::Mat image = draw_pose(m, keypoints);
+
+            std::ostringstream out; 
+
+            std::string img_extension = ".jpg";
+            out << save_folder << img_num << img_extension;
+            cv::imwrite(out.str(),image);
+            img_num++;
+        }
     }
-}
     
 
     return 0;
