@@ -1,13 +1,25 @@
 import os
 
+
+
 visualize_pipeline = {
     # "CNN_model/mobilenet/2020/CNN-CatDog_mobile_sim-opt-fp16": ["images/catdog"],
     # "CNN_model/mobilenet/2020/mobilenet": ["images/catdog"],
     # "CNN_model/resnet18/2020/CNN-CatDog_resnet18_sim-opt-fp16": ["images/catdog"],
-    "pose_model/mobilepose/yoga/yoga_0110/mobilepose.bin": ["images/person", "images/yoga"],
-    "pose_model/mobilepose/22/py_mob.param": ["images/person", "images/yoga"],
-    "pose_model/mobilepose/22/py_mob_opt.bin": ["images/person", "images/yoga"],
-    "pose_model/seresnet101/person/coco_0110/seresnet101_pose.bin": ["images/yoga"]
+    # "pose_model/mobilepose/yoga/yoga_0110/mobilepose.bin": ["images/person", "images/yoga"],
+    # "pose_model/mobilepose/22/py_mob.param": ["images/person", "images/yoga"],
+    # "pose_model/mobilepose/22/py_mob_opt.bin": ["images/person", "images/yoga"],
+    # "pose_model/seresnet101/person/coco_0110/seresnet101_pose.bin": ["images/yoga"]
+    "det_model/yolo/5_ALL-prune_0.95_keep_0.1_10_shortcut/ncnn.bin": ["images/underwater_rgb"],
+    "det_model/yolo/5_ALL-prune_0.95_keep_0.1_10_shortcut/ncnn_opt-fp16.bin": ["images/underwater_rgb"],
+    "det_model/yolo/5_best/ncnn.bin": ["images/underwater_rgb"],
+    "det_model/yolo/5_best/ncnn_opt-fp16.bin": ["images/underwater_rgb"],
+    "det_model/yolo/5_last/ncnn_opt-fp16.bin": ["images/underwater_rgb"],
+    "det_model/yolo/5_last/ncnn.bin": ["images/underwater_rgb"],
+    "det_model/yolo/15/ncnn_opt-fp16.bin": ["images/underwater_rgb"],
+    "det_model/yolo/15/ncnn.bin": ["images/underwater_rgb"],
+    "det_model/yolo/15_ALL-prune_0.91_keep_0.1_10_shortcut/ncnn_opt-fp16.bin": ["images/underwater_rgb"],
+    "det_model/yolo/15_ALL-prune_0.91_keep_0.1_10_shortcut/ncnn_opt.bin": ["images/underwater_rgb"],
 }
 
 
@@ -60,7 +72,6 @@ for idx, (model, image_srcs) in enumerate(visualize_pipeline.items()):
     exe_file = select_exe(model)
     copy_cmd = "python copy_model.py {}".format(model)
     os.system(copy_cmd)
-
     print(copy_cmd)
 
     for image_src in image_srcs:
