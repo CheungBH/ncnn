@@ -54,14 +54,14 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
     ex.input("input.1", in);
 
     ncnn::Mat out;
-    ex.extract("1123", out);
+    ex.extract("342", out);
 
     // resolve point from heatmap
     keypoints.clear();
     for (int p = 0; p < out.c; p++)
     {
         const ncnn::Mat m = out.channel(p);
-        std::cout << typeid(m).name()<<std::endl;
+
         float max_prob = 0.f;
         int max_x = 0;
         int max_y = 0;
@@ -95,11 +95,11 @@ static void draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints
     cv::Mat image = bgr.clone();
 
     // draw bone
-    static const int joint_pairs[16][2] = {
-        {0, 1}, {1, 3}, {0, 2}, {2, 4}, {5, 6}, {5, 7}, {7, 9}, {6, 8}, {8, 10}, {5, 11}, {6, 12}, {11, 12}, {11, 13}, {12, 14}, {13, 15}, {14, 16}
+    static const int joint_pairs[12][2] = {
+        {5, 3}, {3, 1}, {1, 2}, {2, 4}, {4, 6}, {1, 7}, {2, 8}, {7, 8}, {7, 9}, {9, 11}, {8, 10}, {10, 12},
     };
 
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < 12; i++)
     {
         const KeyPoint& p1 = keypoints[joint_pairs[i][0]];
         const KeyPoint& p2 = keypoints[joint_pairs[i][1]];
@@ -142,8 +142,8 @@ int main(int argc, char** argv)
     ncnn::Net posenet;
 
     posenet.opt.use_vulkan_compute = true;
-    posenet.load_param("pose_model/seresnet101.param");
-    posenet.load_model("pose_model/seresnet101.bin");
+    posenet.load_param("pose_model/seresnet18.param");
+    posenet.load_model("pose_model/seresnet18.bin");
     struct stat s;
     int camera = int(*imagepath) -'0';
     if (camera == 0)

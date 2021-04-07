@@ -24,8 +24,8 @@ def main(args):
                 os.system(commond_1)
                 command_2 = './ncnnoptimize {0} {1} {2} {3} 65536'.format(param_name, bin_name ,param_opt, bin_opt)
                 os.system(command_2)
-                os.remove(param_name)
-                os.remove(bin_name)
+                #os.remove(param_name)
+                #os.remove(bin_name)
 
 if __name__ == '__main__':
     args = parse_args()

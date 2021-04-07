@@ -13,13 +13,13 @@
 // specific language governing permissions and limitations under the License.
 
 #include "net.h"
-
+#include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <vector>
-
+#include <sys/stat.h>
 #define YOLOV4_TINY 1 //0 or undef for yolov4
 
 struct Object
@@ -29,28 +29,13 @@ struct Object
     float prob;
 };
 
-static int detect_yolov4(const cv::Mat& bgr, std::vector<Object>& objects)
+static int detect_yolov4(ncnn::Net& yolov4, const cv::Mat& bgr, std::vector<Object>& objects)
 {
-    ncnn::Net yolov4;
 
-    yolov4.opt.use_vulkan_compute = true;
-
-    // original pretrained model from https://github.com/AlexeyAB/darknet
-    // the ncnn model https://drive.google.com/drive/folders/1YzILvh0SKQPS_lrb33dmGNq7aVTKPWS0?usp=sharing
-    // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-#if YOLOV4_TINY
-    yolov4.load_param("det_model/yolo.param");
-    yolov4.load_model("det_model/yolo.bin");
-    const int target_size = 416;
-#else
-    yolov4.load_param("det_model/yolo.param");
-    yolov4.load_model("det_model/yolo.bin");
-    const int target_size = 416;
-#endif
 
     int img_w = bgr.cols;
     int img_h = bgr.rows;
-
+    const int target_size = 416;
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, bgr.cols, bgr.rows, target_size, target_size);
 
     const float mean_vals[3] = {0, 0, 0};
@@ -85,7 +70,7 @@ static int detect_yolov4(const cv::Mat& bgr, std::vector<Object>& objects)
     return 0;
 }
 
-static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
+static cv::Mat draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 {
     static const char* class_names[] = {"background", "person", "bicycle",
                                         "car", "motorbike", "aeroplane", "bus", "train", "truck",
@@ -137,30 +122,106 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
     }
 
     cv::imshow("image", image);
-    cv::waitKey(0);
+    cv::waitKey(1);
+    return image;
 }
 
 int main(int argc, char** argv)
+// {
+//     if (argc != 2)
+//     {
+//         fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
+//         return -1;
+//     }
+
+//     const char* imagepath = argv[1];
+
+//     cv::Mat m = cv::imread(imagepath, 1);
+//     if (m.empty())
+//     {
+//         fprintf(stderr, "cv::imread %s failed\n", imagepath);
+//         return -1;
+//     }
+
+//     std::vector<Object> objects;
+//     detect_yolov4(m, objects);
+
+//     draw_objects(m, objects);
+
+//     return 0;
+// }
 {
-    if (argc != 2)
-    {
-        fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
-        return -1;
-    }
-
     const char* imagepath = argv[1];
+    printf(imagepath ,"\n");
+    ncnn::Net yolov4;
+    struct stat s;
+    yolov4.opt.use_vulkan_compute = true;
 
-    cv::Mat m = cv::imread(imagepath, 1);
-    if (m.empty())
+#if YOLOV4_TINY
+    yolov4.load_param("det_model/yolo.param");
+    yolov4.load_model("det_model/yolo.bin");
+    const int target_size = 416;
+#else
+    yolov4.load_param("det_model/yolo.param");
+    yolov4.load_model("det_model/yolo.bin");
+    const int target_size = 416;
+#endif
+
+    // int camera = int(*imagepath) -'0';
+    if (imagepath == "0")
     {
-        fprintf(stderr, "cv::imread %s failed\n", imagepath);
-        return -1;
+    	// printf(camera);
+        cv::VideoCapture capture(0);
+        while(true)
+        {
+            cv::Mat m;
+            capture >> m;
+            cv::resize(m,m,cv::Size(416,416));
+
+    		std::vector<Object> objects;
+    		detect_yolov4(yolov4,m, objects);
+            cv::Mat image = draw_objects(m, objects);
+        }
     }
 
-    std::vector<Object> objects;
-    detect_yolov4(m, objects);
+    else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFREG)
+    {
+    	printf("img: ", "\n");
+        cv::Mat m = cv::imread(imagepath, 1);
+        if (m.empty())
+        {
+            fprintf(stderr, "cv::imread %s failed\n", imagepath);
+            return -1;
+        }
 
-    draw_objects(m, objects);
+			std::vector<Object> objects;
+    		detect_yolov4(yolov4,m, objects);
+            cv::Mat image = draw_objects(m, objects);
+    }
+    else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFDIR)
+    {
+        int img_num = 0;
+        std::string save_folder = argv[2];
+        std::vector<std::string> fn;
+        cv::glob(imagepath,fn,true);
+        for (int i=0; i<fn.size(); i++)
+        {
+            std::cout<<fn[i]<<std::endl;
+        }
+        for (int i=0; i<fn.size(); i++){
+        cv::Mat m = cv::imread(fn[i], 1);
+		std::vector<Object> objects;
+    	detect_yolov4(yolov4,m, objects);
+        cv::Mat image = draw_objects(m, objects);
+        std::ostringstream out; 
+
+        std::string img_extension = ".jpg";
+        out << save_folder << img_num << img_extension;
+        cv::imwrite(out.str(),image);
+        img_num++;
+
+    }
+}
 
     return 0;
 }

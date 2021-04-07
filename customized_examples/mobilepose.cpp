@@ -56,7 +56,7 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
     for (int p = 0; p < out.c; p++)
     {
         const ncnn::Mat m = out.channel(p);
-        std::cout << typeid(m).name()<<std::endl;
+        // std::cout << typeid(m).name()<<std::endl;
         float max_prob = 0.f;
         int max_x = 0;
         int max_y = 0;
@@ -143,8 +143,8 @@ int main(int argc, char** argv)
     ncnn::Net posenet;
 
     posenet.opt.use_vulkan_compute = true;
-    posenet.load_param("pose_model/mobilepose.param");
-    posenet.load_model("pose_model/mobilepose.bin");
+    posenet.load_param("pose_model/pose_no_skip.param");
+    posenet.load_model("pose_model/pose_no_skip.bin");
     struct stat s;
     int camera = int(*imagepath) -'0';
     // open camera

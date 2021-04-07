@@ -1,12 +1,14 @@
 macro(ncnn_add_example name)
+
     add_executable(${name} ${name}.cpp)
     target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
     target_link_libraries(${name} PRIVATE ncnn ${OpenCV_LIBS})
-
+    target_link_libraries(${name} PRIVATE jsoncpp_object jsoncpp_static)
     # add test to a virtual project group
     set_property(TARGET ${name} PROPERTY FOLDER "customized_examples")
 endmacro()
-
+list(APPEND CMAKE_PREFIX_PATH "/home/hkuit164/Desktop/vcpkg/installed/x64-linux/share/jsoncpp")
+find_package(jsoncpp CONFIG REQUIRED)
 find_package(OpenCV QUIET COMPONENTS opencv_world)
 # for opencv 2.4 on ubuntu 16.04, there is no opencv_world but OpenCV_FOUND will be TRUE
 if("${OpenCV_LIBS}" STREQUAL "")
