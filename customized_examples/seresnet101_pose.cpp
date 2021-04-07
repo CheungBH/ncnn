@@ -1,169 +1,178 @@
-// Tencent is pleased to support the open source community by making ncnn available.
-//
-// Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
-//
-// Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
-// in compliance with the License. You may obtain a copy of the License at
-//
-// https://opensource.org/licenses/BSD-3-Clause
-//
-// Unless required by applicable law or agreed to in writing, software distributed
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 #include "net.h"
-
-#include <algorithm>
+#include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <vector>
 #include <sys/stat.h>
-#include <iostream>
-#include <sstream>
-#include <typeinfo>
+#define YOLOV4_TINY 1 //0 or undef for yolov4
 
-struct KeyPoint
+struct Object
 {
-    cv::Point2f p;
+    cv::Rect_<float> rect;
+    int label;
     float prob;
 };
 
-static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
+static int detect_yolov4(ncnn::Net& yolov4, const cv::Mat& bgr, std::vector<Object>& objects)
 {
 
 
-    int w = bgr.cols;
-    int h = bgr.rows;
+    int img_w = bgr.cols;
+    int img_h = bgr.rows;
+    const int target_size = 416;
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, bgr.cols, bgr.rows, target_size, target_size);
 
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, w, h, 192, 256);
-
-    // transforms.ToTensor(),
-    // transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-    // R' = (R / 255 - 0.485) / 0.229 = (R - 0.485 * 255) / 0.229 / 255
-    // G' = (G / 255 - 0.456) / 0.224 = (G - 0.456 * 255) / 0.224 / 255
-    // B' = (B / 255 - 0.406) / 0.225 = (B - 0.406 * 255) / 0.225 / 255
-    const float mean_vals[3] = {0.485f, 0.456f, 0.406f};
-    //const float norm_vals[3] = {1 / 0.229f / 255.f, 1 / 0.224f / 255.f, 1 / 0.225f / 255.f};
+    const float mean_vals[3] = {0, 0, 0};
     const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
-    ncnn::Extractor ex = posenet.create_extractor();
+    ncnn::Extractor ex = yolov4.create_extractor();
 
-    ex.input("input.1", in);
+    ex.input("data", in);
 
     ncnn::Mat out;
-    ex.extract("1123", out);
+    ex.extract("output", out);
 
-    // resolve point from heatmap
-    keypoints.clear();
-    for (int p = 0; p < out.c; p++)
+    //     printf("%d %d %d\n", out.w, out.h, out.c);
+    objects.clear();
+    for (int i = 0; i < out.h; i++)
     {
-        const ncnn::Mat m = out.channel(p);
-        std::cout << typeid(m).name()<<std::endl;
-        float max_prob = 0.f;
-        int max_x = 0;
-        int max_y = 0;
-        for (int y = 0; y < out.h; y++)
-        {
-            const float* ptr = m.row(y);
-            for (int x = 0; x < out.w; x++)
-            {
-                float prob = ptr[x];
-                if (prob > max_prob)
-                {
-                    max_prob = prob;
-                    max_x = x;
-                    max_y = y;
-                }
-            }
-        }
+        const float* values = out.row(i);
+    //printf(values);
 
-        KeyPoint keypoint;
-        keypoint.p = cv::Point2f(max_x * w / (float)out.w, max_y * h / (float)out.h);
-        keypoint.prob = max_prob;
+        Object object;
+        object.label = values[0];
+        object.prob = values[1];
+        object.rect.x = values[2] * img_w;
+        object.rect.y = values[3] * img_h;
+        object.rect.width = values[4] * img_w - object.rect.x;
+        object.rect.height = values[5] * img_h - object.rect.y;
 
-        keypoints.push_back(keypoint);
+        objects.push_back(object);
     }
 
     return 0;
 }
 
-static cv::Mat draw_pose(const cv::Mat& bgr, const std::vector<KeyPoint>& keypoints)
+static cv::Mat draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 {
+    static const char* class_names[] = {"background", "person", "bicycle",
+                                        "car", "motorbike", "aeroplane", "bus", "train", "truck",
+                                        "boat", "traffic light", "fire hydrant", "stop sign",
+                                        "parking meter", "bench", "bird", "cat", "dog", "horse",
+                                        "sheep", "cow", "elephant", "bear", "zebra", "giraffe",
+                                        "backpack", "umbrella", "handbag", "tie", "suitcase",
+                                        "frisbee", "skis", "snowboard", "sports ball", "kite",
+                                        "baseball bat", "baseball glove", "skateboard", "surfboard",
+                                        "tennis racket", "bottle", "wine glass", "cup", "fork",
+                                        "knife", "spoon", "bowl", "banana", "apple", "sandwich",
+                                        "orange", "broccoli", "carrot", "hot dog", "pizza", "donut",
+                                        "cake", "chair", "sofa", "pottedplant", "bed", "diningtable",
+                                        "toilet", "tvmonitor", "laptop", "mouse", "remote", "keyboard",
+                                        "cell phone", "microwave", "oven", "toaster", "sink",
+                                        "refrigerator", "book", "clock", "vase", "scissors",
+                                        "teddy bear", "hair drier", "toothbrush"
+                                       };
+
     cv::Mat image = bgr.clone();
 
-    // draw bone
-    static const int joint_pairs[16][2] = {
-        {0, 1}, {1, 3}, {0, 2}, {2, 4}, {5, 6}, {5, 7}, {7, 9}, {6, 8}, {8, 10}, {5, 11}, {6, 12}, {11, 12}, {11, 13}, {12, 14}, {13, 15}, {14, 16}
-    };
-
-    for (int i = 0; i < 16; i++)
+    for (size_t i = 0; i < objects.size(); i++)
     {
-        const KeyPoint& p1 = keypoints[joint_pairs[i][0]];
-        const KeyPoint& p2 = keypoints[joint_pairs[i][1]];
+        const Object& obj = objects[i];
 
-        if (p1.prob < 0.04f || p2.prob < 0.04f)
-            continue;
+        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
+                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
 
-        cv::line(image, p1.p, p2.p, cv::Scalar(255, 0, 0), 2);
+        cv::rectangle(image, obj.rect, cv::Scalar(255, 0, 0));
+
+        char text[256];
+        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
+
+        int baseLine = 0;
+        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+
+        int x = obj.rect.x;
+        int y = obj.rect.y - label_size.height - baseLine;
+        if (y < 0)
+            y = 0;
+        if (x + label_size.width > image.cols)
+            x = image.cols - label_size.width;
+
+        cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
+                      cv::Scalar(255, 255, 255), -1);
+
+        cv::putText(image, text, cv::Point(x, y + label_size.height),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
     }
 
-    // draw joint
-    for (size_t i = 0; i < keypoints.size(); i++)
-    {
-        const KeyPoint& keypoint = keypoints[i];
-
-        fprintf(stderr, "%.2f %.2f = %.5f\n", keypoint.p.x, keypoint.p.y, keypoint.prob);
-
-        if (keypoint.prob < 0.2f)
-            continue;
-
-        cv::circle(image, keypoint.p, 3, cv::Scalar(0, 255, 0), -1);
-    }
-
-    //cv::imshow("image", image);
-    //cv::waitKey(0);
+    cv::imshow("image", image);
+    cv::waitKey(1);
     return image;
-    //static int s = 0;
-    //std::ostringstream out; 
-    //std::string save_folder = "save/";
-    //std::string img_extension = ".jpg";
-    //out << save_folder << s << img_extension;
-    // cv::imwrite("save/result" + std::to_string(s) + ".jpg",image);
-    //cv::imwrite(out.str(),image);
-    //s++;
 }
 
 int main(int argc, char** argv)
+// {
+//     if (argc != 2)
+//     {
+//         fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
+//         return -1;
+//     }
+
+//     const char* imagepath = argv[1];
+
+//     cv::Mat m = cv::imread(imagepath, 1);
+//     if (m.empty())
+//     {
+//         fprintf(stderr, "cv::imread %s failed\n", imagepath);
+//         return -1;
+//     }
+
+//     std::vector<Object> objects;
+//     detect_yolov4(m, objects);
+
+//     draw_objects(m, objects);
+
+//     return 0;
+// }
 {
     const char* imagepath = argv[1];
-
-    ncnn::Net posenet;
-
-    posenet.opt.use_vulkan_compute = true;
-    posenet.load_param("pose_model/seresnet101.param");
-    posenet.load_model("pose_model/seresnet101.bin");
+    printf(imagepath ,"\n");
+    ncnn::Net yolov4;
     struct stat s;
-    int camera = int(*imagepath) -'0';
-    if (camera == 0)
+    yolov4.opt.use_vulkan_compute = true;
+
+#if YOLOV4_TINY
+    yolov4.load_param("det_model/yolo.param");
+    yolov4.load_model("det_model/yolo.bin");
+    const int target_size = 416;
+#else
+    yolov4.load_param("det_model/yolo.param");
+    yolov4.load_model("det_model/yolo.bin");
+    const int target_size = 416;
+#endif
+
+    // int camera = int(*imagepath) -'0';
+    if (imagepath == "0")
     {
+        // printf(camera);
         cv::VideoCapture capture(0);
         while(true)
         {
             cv::Mat m;
             capture >> m;
             cv::resize(m,m,cv::Size(416,416));
-            std::vector<KeyPoint> keypoints;
-            detect_posenet(posenet, m, keypoints);
 
-            cv::Mat image = draw_pose(m, keypoints);
+            std::vector<Object> objects;
+            detect_yolov4(yolov4,m, objects);
+            cv::Mat image = draw_objects(m, objects);
         }
-    } 
+    }
+
     else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFREG)
     {
+        printf("img: ", "\n");
         cv::Mat m = cv::imread(imagepath, 1);
         if (m.empty())
         {
@@ -171,10 +180,9 @@ int main(int argc, char** argv)
             return -1;
         }
 
-        std::vector<KeyPoint> keypoints;
-        detect_posenet(posenet, m, keypoints);
-
-        cv::Mat image = draw_pose(m, keypoints);
+            std::vector<Object> objects;
+            detect_yolov4(yolov4,m, objects);
+            cv::Mat image = draw_objects(m, objects);
     }
     else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFDIR)
     {
@@ -188,11 +196,9 @@ int main(int argc, char** argv)
         }
         for (int i=0; i<fn.size(); i++){
         cv::Mat m = cv::imread(fn[i], 1);
-
-        std::vector<KeyPoint> keypoints;
-        detect_posenet(posenet, m, keypoints);
-        cv::Mat image = draw_pose(m, keypoints);
-
+        std::vector<Object> objects;
+        detect_yolov4(yolov4,m, objects);
+        cv::Mat image = draw_objects(m, objects);
         std::ostringstream out; 
 
         std::string img_extension = ".jpg";
@@ -202,7 +208,6 @@ int main(int argc, char** argv)
 
     }
 }
-    
 
     return 0;
 }
