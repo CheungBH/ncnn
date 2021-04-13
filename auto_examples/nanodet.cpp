@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <vector>
 #include <iostream>
+#include <sys/stat.h>
+
 #define NCNN_PROFILING
 struct Object
 {
@@ -352,7 +354,7 @@ static int detect_nanodet(ncnn::Net& nanodet,const cv::Mat& bgr, std::vector<Obj
     return 0;
 }
 
-static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
+static cv::Mat draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 {
     static const char* class_names[] = {
         "person", 
@@ -389,17 +391,13 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
     }
 
-    cv::imshow("image", image);
-    cv::waitKey(1);
+    return image;
+
 }
 
 int main(int argc, char** argv)
 {
-    if (argc != 2)
-    {
-        fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
-        return -1;
-    }
+
 
     // const char* imagepath = argv[1];
 
@@ -410,44 +408,107 @@ int main(int argc, char** argv)
     //     return -1;
     // }
 
-    cv::VideoCapture capture(0);
+    const char* imagepath = argv[1];
+    printf(imagepath ,"\n");
+    struct stat s;
 
     ncnn::Net nanodet;
-
     nanodet.opt.use_vulkan_compute = true;
     // nanodet.opt.use_bf16_storage = true;
 
     // original pretrained model from https://github.com/RangiLyu/nanodet
     // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-    nanodet.load_param("nanodet_m.param");
-    nanodet.load_model("nanodet_m.bin");
+    nanodet.load_param("model_nanodet/model.param");
+    nanodet.load_model("model_nanodet/model.bin");
 
-    while (true)
+    if (imagepath == "0")
     {
-        cv::Mat m;
-        capture >> m;
-        cv::resize(m,m,cv::Size(416,416));
-        std::vector<Object> objects;
-#ifdef NCNN_PROFILING
-        auto detection_start_time = std::chrono::high_resolution_clock::now();
-#endif
-        detect_nanodet(nanodet, m, objects);
-#ifdef NCNN_PROFILING
-        auto detection_end_time = std::chrono::high_resolution_clock::now();
-        auto detection_duration = std::chrono::duration_cast<std::chrono::milliseconds>(detection_end_time - detection_start_time);
-        printf("detection_duration: ", detection_duration, "\n");
+    	// printf(camera);
+        cv::VideoCapture capture(0);
+        while(true)
+        {
+            cv::Mat m;
+            capture >> m;
+            cv::resize(m,m,cv::Size(416,416));
 
-        auto draw_start_time = std::chrono::high_resolution_clock::now();
-#endif
-        draw_objects(m, objects);
-#ifdef NCNN_PROFILING
-        auto draw_end_time = std::chrono::high_resolution_clock::now();
-        auto draw_duration = std::chrono::duration_cast<std::chrono::milliseconds>(draw_end_time - draw_start_time);
-        printf("draw_start_time: ", draw_start_time, "\n");
-#endif
+    		std::vector<Object> objects;
+    		detect_nanodet(nanodet, m, objects);
+            cv::Mat image = draw_objects(m, objects);
+            cv::imshow("img", image);
+            cv::waitKey(1);
+        }
     }
 
+    else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFREG)
+    {
+    	printf("img: ", "\n");
+        cv::Mat m = cv::imread(imagepath, 1);
+        if (m.empty())
+        {
+            fprintf(stderr, "cv::imread %s failed\n", imagepath);
+            return -1;
+        }
 
+			std::vector<Object> objects;
+    		detect_nanodet(nanodet, m, objects);
+            cv::Mat image = draw_objects(m, objects);
+            cv::imshow("img", image);
+            cv::waitKey(0);
+    }
+    else if (stat (imagepath, &s) == 0 and s.st_mode & S_IFDIR)
+    {
+        int img_num = 0;
+        std::string save_folder = argv[2];
+        std::vector<std::string> fn;
+        cv::glob(imagepath,fn,true);
+        for (int i=0; i<fn.size(); i++)
+        {
+            std::cout<<fn[i]<<std::endl;
+        }
+        for (int i=0; i<fn.size(); i++){
+        cv::Mat m = cv::imread(fn[i], 1);
+		std::vector<Object> objects;
+		detect_nanodet(nanodet, m, objects);
+        cv::Mat image = draw_objects(m, objects);
+        std::ostringstream out; 
+
+        std::string img_extension = ".jpg";
+        out << save_folder << img_num << img_extension;
+        cv::imshow("img", image);
+        cv::waitKey(100);
+        cv::imwrite(out.str(),image);
+        img_num++;
+
+    }
+
+//     while (true)
+//     {
+//         cv::Mat m;
+//         capture >> m;
+//         cv::resize(m,m,cv::Size(416,416));
+//         std::vector<Object> objects;
+// #ifdef NCNN_PROFILING
+//         auto detection_start_time = std::chrono::high_resolution_clock::now();
+// #endif
+//         detect_nanodet(nanodet, m, objects);
+// #ifdef NCNN_PROFILING
+//         auto detection_end_time = std::chrono::high_resolution_clock::now();
+//         auto detection_duration = std::chrono::duration_cast<std::chrono::milliseconds>(detection_end_time - detection_start_time);
+//         printf("detection_duration: ", detection_duration, "\n");
+
+//         auto draw_start_time = std::chrono::high_resolution_clock::now();
+// #endif
+//         cv::Mat image = draw_objects(m, objects);
+//         cv::imshow("image", image);
+//     	cv::waitKey(1);
+// #ifdef NCNN_PROFILING
+//         auto draw_end_time = std::chrono::high_resolution_clock::now();
+//         auto draw_duration = std::chrono::duration_cast<std::chrono::milliseconds>(draw_end_time - draw_start_time);
+//         printf("draw_start_time: ", draw_start_time, "\n");
+// #endif
+//     }
+
+}
 
     return 0;
 }

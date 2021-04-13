@@ -5,33 +5,37 @@ visualize_pipeline = {
     # "CNN_model/mobilenet/2020/CNN-CatDog_mobile_sim-opt-fp16": ["images/catdog"],
     # "CNN_model/mobilenet/2020/mobilenet": ["images/catdog"],
     # "CNN_model/resnet18/2020/CNN-CatDog_resnet18_sim-opt-fp16": ["images/catdog"],
-    "model_pose/mobilepose/yoga/yoga_0110/mobilepose.bin": ["images/person", "images/yoga"],
-    "model_pose/mobilepose/22/py_mob.param": ["images/person", "images/yoga"],
-    "model_pose/mobilepose/22/py_mob_opt.bin": ["images/person", "images/yoga"],
-    "model_pose/seresnet101/person/coco_0110/seresnet101_pose.bin": ["images/yoga"]
+    # "model_pose/mobilepose/yoga/yoga_0110/mobilepose.bin": ["images/person", "images/yoga"],
+    # "model_pose/mobilepose/22/py_mob.param": ["images/person", "images/yoga"],
+    # "model_pose/mobilepose/22/py_mob_opt.bin": ["images/person", "images/yoga"],
+    # "model_pose/seresnet101/person/coco_0110/seresnet101_pose.bin": ["images/yoga"],
+    # "model_yolo/5_ALL-prune_0.9_keep_0.1_10_shortcut/ncnn.bin": ["images/underwater_rgb"],
+    # "model_yolo/5_last/ncnn.bin": ["images/underwater_rgb"],
+    # "model_yolo/15_ALL-prune_0.91_keep_0.1_10_shortcut/ncnn_opt.bin": ["images/underwater_rgb"],
+    "model_nanodet/coco_sim/ncnn.bin": ["images/person", "images/yoga"],
+    "model_nanodet/coco_sim/ncnn_opt-fp16.param": ["images/person"],
+
 }
 
 
 def get_name(file_name):
     with open(file_name, 'r') as f:
         res = f.readlines()
-    return res[2].split(' '*10)[2].split(" ")[-1][:-1], res[-1].replace('   ','').split(' ')[5]
+    return [i for i in res[2].split(" ") if i][-1][:-1], [i for i in res[-1].split(" ") if i][5]
 
 
 def select_exe(name):
     task = name.split("/")[0]
     if "model_CNN" in task:
-        exe_name = "CNN"
+        return "CNN"
     elif "model_yolo" in task:
-        exe_name = "yolodet"
+        return "yolodet"
     elif "model_nanodet" in task:
-        exe_name = "nanodet"
+        return "nanodet"
     elif "model_pose" in task:
-        exe_name = "pytorch_pose"
+        return "pytorch_pose"
     else:
         raise ValueError("Wrong name of the model!")
-
-    return exe_name
 
 
 def unify_model_name(model_name):
