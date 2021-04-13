@@ -23,7 +23,7 @@
 #include <typeinfo>
 #include "json.hpp"
 
-static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<KeyPoint>& keypoints)
+static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<KeyPoint>& keypoints, char* inp_layer, char* out_layer)
 {
 
 
@@ -39,10 +39,10 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
 
     ncnn::Extractor ex = posenet.create_extractor();
 
-    ex.input("input.1", in);
+    ex.input(inp_layer, in);
 
     ncnn::Mat out;
-    ex.extract("497", out);
+    ex.extract(out_layer, out);
 
     // resolve point from heatmap
     keypoints.clear();
@@ -124,8 +124,8 @@ int main(int argc, char** argv)
     ncnn::Net posenet;
 
     posenet.opt.use_vulkan_compute = true;
-    posenet.load_param("pose_model/mobilepose.param");
-    posenet.load_model("pose_model/mobilepose.bin");
+    posenet.load_param("model_pose/model.param");
+    posenet.load_model("model_pose/model.bin");
     struct stat s;
     int camera = int(*imagepath) -'0';
     int id = 0;
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
             capture >> m;
             cv::resize(m,m,cv::Size(416,416));
             std::vector<KeyPoint> keypoints;
-            detect_posenet(posenet, m, keypoints);
+            detect_posenet(posenet, m, keypoints, argv[3], argv[4]);
 
             // write to json
             json_data::write_json("example.json", "camera", 1, keypoints);
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
         }
 
         std::vector<KeyPoint> keypoints;
-        detect_posenet(posenet, m, keypoints);
+        detect_posenet(posenet, m, keypoints, argv[3], argv[4]);
 
         // write to json
         json_data::write_json("example.json", imagepath, id, keypoints);
@@ -181,11 +181,13 @@ int main(int argc, char** argv)
         {
             std::cout<<fn[i]<<std::endl;
         }
+        std::ostringstream json_file;
+        json_file << save_folder << "example.json"; 
         for (int i=0; i<fn.size(); i++){
             cv::Mat m = cv::imread(fn[i], 1);
 
             std::vector<KeyPoint> keypoints;
-            detect_posenet(posenet, m, keypoints);
+            detect_posenet(posenet, m, keypoints, argv[3], argv[4]);
 
             // write to json
             json_data::write_json("example.json", fn[i], id, keypoints);

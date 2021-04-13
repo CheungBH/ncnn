@@ -35,14 +35,6 @@ else()
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src)
     include_directories(${CMAKE_CURRENT_BINARY_DIR}/../src)
 
-
-    ncnn_add_example(underwater_st)
-    ncnn_add_example(yolo_detection)
-    ncnn_add_example(mm_resnet18_pose)
-    ncnn_add_example(CNN_shufflenet)
-    ncnn_add_example(CNN_resnet18)
-    ncnn_add_example(CNN_mobilenet)
-    ncnn_add_example(seresnet101_pose)
-    ncnn_add_example(mobilepose)
+    ncnn_add_example(pytorch_pose)
 
 endif()
