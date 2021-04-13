@@ -36,5 +36,7 @@ else()
     include_directories(${CMAKE_CURRENT_BINARY_DIR}/../src)
 
     ncnn_add_example(pytorch_pose)
+    ncnn_add_example(yolodet)
+    ncnn_add_example(nanodet)
 
 endif()

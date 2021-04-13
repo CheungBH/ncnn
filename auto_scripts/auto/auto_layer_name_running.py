@@ -23,9 +23,9 @@ def select_exe(name):
     if "model_CNN" in task:
         exe_name = "CNN"
     elif "model_yolo" in task:
-        exe_name = "yolo_detection"
-    elif "model_nano" in task:
-        exe_name = "nano_detection"
+        exe_name = "yolodet"
+    elif "model_nanodet" in task:
+        exe_name = "nanodet"
     elif "model_pose" in task:
         exe_name = "pytorch_pose"
     else:
