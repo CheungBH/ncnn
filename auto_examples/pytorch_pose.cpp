@@ -126,6 +126,8 @@ int main(int argc, char** argv)
     posenet.opt.use_vulkan_compute = true;
     posenet.load_param("model_pose/model.param");
     posenet.load_model("model_pose/model.bin");
+    posenet.load_param("../../build/auto_examples/model_pose/model.param");
+    posenet.load_model("../../build/auto_examples/model_pose/model.bin");
     struct stat s;
     int camera = int(*imagepath) -'0';
     int id = 0;
@@ -146,6 +148,8 @@ int main(int argc, char** argv)
             json_data::write_json("example.json", "camera", 1, keypoints);
 
             cv::Mat image = draw_pose(m, keypoints);
+            cv::imshow("video", image);
+            cv::waitKey(1);
 
         }
     }

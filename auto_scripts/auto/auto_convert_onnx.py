@@ -1,7 +1,7 @@
 import os
 src_folder = "/home/sean/Downloads/nanodet_onnx"
 onnx2ncnn = "/home/sean/Desktop/ncnn/build/tools/onnx/onnx2ncnn"
-ncnn2opt = "/home/sean/Desktop/ncnn/build/tools/ncnnoptimize"
+ncnn2opt = "/home/sean//ncnn/build/tools/ncnnoptimize"
 
 # curr_path = os.getcwd()
 # src_folder

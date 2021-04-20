@@ -144,8 +144,10 @@ int main(int argc, char** argv)
     yolov4.opt.use_vulkan_compute = true;
 
 #if YOLOV4_TINY
-    yolov4.load_param("det_model/yolo.param");
-    yolov4.load_model("det_model/yolo.bin");
+    yolov4.load_param("../../build/auto_examples/model_yolo/model.param");
+    yolov4.load_model("../../build/auto_examples/model_yolo/model.bin");
+//    yolov4.load_param("model_yolo/model.param");
+//    yolov4.load_model("model_yolo/model.bin");
     const int target_size = 416;
 #else
     yolov4.load_param("det_model/yolo.param");
