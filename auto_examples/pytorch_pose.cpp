@@ -23,14 +23,54 @@
 #include <typeinfo>
 #include "json.hpp"
 
+int SPPE_TENSOR_W = 256;
+int SPPE_TENSOR_H = 320;
+
 static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<KeyPoint>& keypoints, char* inp_layer, char* out_layer)
 {
 
+//    std::vector<KP> target;
+    cv::Mat img_tmp = bgr.clone();
+    cv::Scalar grey_value(128, 128, 128);
+    cv::Mat sppe_padded_img(SPPE_TENSOR_H, SPPE_TENSOR_W, CV_8UC3, grey_value);
 
-    int w = bgr.cols;
-    int h = bgr.rows;
+    int original_w = bgr.cols, original_h = bgr.rows;
+    double resize_ratio = 1;
+    double resize_ratio_1 = (double)SPPE_TENSOR_W/original_w;
+    double resize_ratio_2 = (double)SPPE_TENSOR_H/original_h;
 
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, w, h, 256, 320);
+    double resize_ratio_final = resize_ratio_1 < resize_ratio_2 ? resize_ratio_1 : resize_ratio_2;
+    resize_ratio = resize_ratio_final;
+
+    double new_w = (double)original_w * resize_ratio;
+    double new_h = (double)original_h * resize_ratio;
+    double padded_x ;
+    double padded_y ;
+    if(original_w > original_h)
+    {
+        padded_x = 0;
+        padded_y = (0.5)*((double)320.0 - new_h);
+        //std::cout << "w: " << img.cols << " h: " << img.rows << " resize_ratio: " << resize_ratio <<std::endl;
+    }
+    else
+    {
+        padded_x = (0.5)*((double)256.0 - new_w);
+        padded_y = 0;
+        //std::cout << "w: " << img.cols << " h: " << img.rows << " resize_ratio: " << resize_ratio <<std::endl;
+    }
+    cv::Size new_sz(new_w,new_h);
+    cv::resize(img_tmp, img_tmp, new_sz);
+    cv::imshow("resized", img_tmp);
+    img_tmp.copyTo(sppe_padded_img(cv::Rect(padded_x, padded_y, new_w, new_h)));
+
+    cv::imshow("padded", sppe_padded_img);
+//    cv::waitKey(0);
+
+
+    auto start = std::chrono::steady_clock::now();
+
+
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(sppe_padded_img.data, ncnn::Mat::PIXEL_BGR2RGB, SPPE_TENSOR_W, SPPE_TENSOR_H, 256, 320);
 
     const float mean_vals[3] = {0.485f, 0.456f, 0.406f};
 
@@ -43,6 +83,8 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
 
     ncnn::Mat out;
     ex.extract(out_layer, out);
+
+    int out_w = out.w, out_h = out.h;
 
     // resolve point from heatmap
     keypoints.clear();
@@ -69,7 +111,10 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
         }
 
         KeyPoint keypoint;
-        keypoint.p = cv::Point2f(max_x * w / (float)out.w, max_y * h / (float)out.h);
+        float coord_x = (float) ((float) max_x / (float) out_w * (float) SPPE_TENSOR_W - (float )padded_x) / (float) resize_ratio ;
+        float coord_y = (float) ((float) max_y / (float) out_h * (float) SPPE_TENSOR_H - (float )padded_y) / (float) resize_ratio ;
+        keypoint.p = cv::Point2f(coord_x, coord_y);
+//        keypoint.p = cv::Point2f(max_x * w / (float)out.w, max_y * h / (float)out.h);
         keypoint.prob = max_prob;
 
         keypoints.push_back(keypoint);
@@ -124,8 +169,8 @@ int main(int argc, char** argv)
     ncnn::Net posenet;
 
     posenet.opt.use_vulkan_compute = true;
-    posenet.load_param("model_pose/model.param");
-    posenet.load_model("model_pose/model.bin");
+//    posenet.load_param("model_pose/model.param");
+//    posenet.load_model("model_pose/model.bin");
     posenet.load_param("../../build/auto_examples/model_pose/model.param");
     posenet.load_model("../../build/auto_examples/model_pose/model.bin");
     struct stat s;
@@ -199,6 +244,11 @@ int main(int argc, char** argv)
             id++;
 
             cv::Mat image = draw_pose(m, keypoints);
+
+            cv::resize(image, image, cv::Size(640, 480));
+            cv::imshow("result", image);
+
+            cv::waitKey(0);
 
             std::ostringstream out; 
 
