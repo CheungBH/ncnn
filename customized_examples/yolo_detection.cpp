@@ -189,7 +189,7 @@ int main(int argc, char** argv)
         int img_num = 0;
         std::string save_folder = argv[2];
         std::vector<std::string> fn;
-        cv::glob(imagepath,fn,true);
+//        cv::glob(imagepath,fn,true);
         for (int i=0; i<fn.size(); i++)
         {
             std::cout<<fn[i]<<std::endl;

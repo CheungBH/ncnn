@@ -251,9 +251,9 @@ static int detect_nanodet(ncnn::Net& nanodet,const cv::Mat& bgr, std::vector<Obj
         h = target_size;
         w = w * scale;
     }
-#ifdef NCNN_PROFILING
-    auto nanodet_start_time = std::chrono::high_resolution_clock::now();
-#endif
+//#ifdef NCNN_PROFILING
+//    auto nanodet_start_time = std::chrono::high_resolution_clock::now();
+//#endif
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, width, height, w, h);
 
     // pad to target_size rectangle
@@ -310,11 +310,11 @@ static int detect_nanodet(ncnn::Net& nanodet,const cv::Mat& bgr, std::vector<Obj
 
         proposals.insert(proposals.end(), objects32.begin(), objects32.end());
     }
-#ifdef NCNN_PROFILING
-    auto nanodet_end_time = std::chrono::high_resolution_clock::now();
-    auto nanodet_duration = std::chrono::duration_cast<std::chrono::milliseconds>(nanodet_end_time - nanodet_start_time);
-    printf("nanodet_detection_duration: ", nanodet_duration, "\n");
-#endif
+//#ifdef NCNN_PROFILING
+//    auto nanodet_end_time = std::chrono::high_resolution_clock::now();
+//    auto nanodet_duration = std::chrono::duration_cast<std::chrono::milliseconds>(nanodet_end_time - nanodet_start_time);
+//    printf("nanodet_detection_duration: ", nanodet_duration, "\n");
+//#endif
     // sort all proposals by score from highest to lowest
     // for (int i=0;i<proposals.size();i++){
     // std::cout<<proposals[1]<<std::endl;
@@ -460,7 +460,7 @@ int main(int argc, char** argv)
         int img_num = 0;
         std::string save_folder = argv[2];
         std::vector<std::string> fn;
-        cv::glob(imagepath,fn,true);
+//        cv::glob(imagepath,fn,true);
         for (int i=0; i<fn.size(); i++)
         {
             std::cout<<fn[i]<<std::endl;

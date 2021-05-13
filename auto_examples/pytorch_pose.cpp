@@ -60,14 +60,7 @@ static int detect_posenet(ncnn::Net& posenet, const cv::Mat& bgr, std::vector<Ke
     }
     cv::Size new_sz(new_w,new_h);
     cv::resize(img_tmp, img_tmp, new_sz);
-    cv::imshow("resized", img_tmp);
     img_tmp.copyTo(sppe_padded_img(cv::Rect(padded_x, padded_y, new_w, new_h)));
-
-    cv::imshow("padded", sppe_padded_img);
-//    cv::waitKey(0);
-
-
-    auto start = std::chrono::steady_clock::now();
 
 
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(sppe_padded_img.data, ncnn::Mat::PIXEL_BGR2RGB, SPPE_TENSOR_W, SPPE_TENSOR_H, 256, 320);
@@ -225,7 +218,7 @@ int main(int argc, char** argv)
         int img_num = 0;
         std::string save_folder = argv[2];
         std::vector<std::string> fn;
-        cv::glob(imagepath,fn,true);
+//        cv::glob(imagepath,fn,true);
         for (int i=0; i<fn.size(); i++)
         {
             std::cout<<fn[i]<<std::endl;

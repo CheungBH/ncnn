@@ -59,7 +59,7 @@ static int detect_yolov4(ncnn::Net& yolov4, const cv::Mat& bgr, std::vector<Obje
     cv::resize(tmp, tmp, new_sz);
 
     tmp.copyTo(gray_img(cv::Rect(padded_x, padded_y, new_w, new_h)));
-    cv::imshow("test", gray_img);
+//    cv::imshow("test", gray_img);
 
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(gray_img.data, ncnn::Mat::PIXEL_BGR, gray_img.cols, gray_img.rows, target_size, target_size);
 
@@ -244,7 +244,7 @@ int main(int argc, char** argv)
         int img_num = 0;
         std::string save_folder = argv[2];
         std::vector<std::string> fn;
-        cv::glob(imagepath,fn,true);
+//        cv::glob(imagepath,fn,true);
         for (int i=0; i<fn.size(); i++)
         {
             std::cout<<fn[i]<<std::endl;
