@@ -71,6 +71,10 @@
 #endif
 #endif
 
+#if defined(__SSE3__)
+#include <immintrin.h>
+#endif
+
 namespace ncnn {
 
 #if defined __ANDROID__ || defined __linux__
@@ -86,8 +90,7 @@ static unsigned int get_elf_hwcap_from_proc_self_auxv()
 
 #define AT_HWCAP  16
 #define AT_HWCAP2 26
-#if __aarch64__
-
+#if __aarch64__ || __riscv_xlen == 64
     struct
     {
         uint64_t tag;
@@ -134,6 +137,11 @@ static unsigned int g_hwcaps = get_elf_hwcap_from_proc_self_auxv();
 // from arch/arm/include/uapi/asm/hwcap.h
 #define HWCAP_NEON  (1 << 12)
 #define HWCAP_VFPv4 (1 << 16)
+#endif
+
+#if __riscv
+// from arch/riscv/include/uapi/asm/hwcap.h
+#define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
 #endif
 
 #endif // defined __ANDROID__ || defined __linux__
@@ -369,6 +377,64 @@ int cpu_support_x86_avx2()
 #endif
 }
 
+int cpu_support_riscv_v()
+{
+#if defined __ANDROID__ || defined __linux__
+#if __riscv
+    return g_hwcaps & COMPAT_HWCAP_ISA_V;
+#else
+    return 0;
+#endif
+#else
+    return 0;
+#endif
+}
+
+int cpu_support_riscv_zfh()
+{
+#if __riscv
+#if __riscv_zfh
+    // https://github.com/riscv/riscv-zfinx/blob/master/Zfinx_spec.adoc#5-discovery
+    __fp16 a = 0;
+    asm volatile(
+        "fneg.h     %0, %0  \n"
+        : "=f"(a)
+        : "0"(a)
+        :);
+    union
+    {
+        __fp16 a;
+        unsigned short u;
+    } tmp;
+    tmp.a = a;
+    return tmp.u != 0 ? 1 : 0;
+#else
+    return 0;
+#endif
+#else
+    return 0;
+#endif
+}
+
+int cpu_riscv_vlenb()
+{
+#if __riscv
+    if (!cpu_support_riscv_v())
+        return 0;
+
+    // TODO asm word for riscv without v
+    int a = 0;
+    asm volatile(
+        "csrr   %0, vlenb   \n"
+        : "=r"(a)
+        :
+        : "memory");
+    return a;
+#else
+    return 0;
+#endif
+}
+
 static int get_cpucount()
 {
     int count = 0;
@@ -428,7 +494,8 @@ int get_little_cpu_count()
 
 int get_big_cpu_count()
 {
-    return get_cpu_thread_affinity_mask(2).num_enabled();
+    int big_cpu_count = get_cpu_thread_affinity_mask(2).num_enabled();
+    return big_cpu_count ? big_cpu_count : g_cpucount;
 }
 
 #if defined __ANDROID__ || defined __linux__
@@ -844,6 +911,53 @@ void set_kmp_blocktime(int time_ms)
     kmp_set_blocktime(time_ms);
 #else
     (void)time_ms;
+#endif
+}
+
+static ncnn::ThreadLocalStorage tls_flush_denormals;
+
+int get_flush_denormals()
+{
+#if defined(__SSE3__)
+    return (int)reinterpret_cast<size_t>(tls_flush_denormals.get());
+#else
+    return 0;
+#endif
+}
+
+int set_flush_denormals(int flush_denormals)
+{
+    if (flush_denormals < 0 || flush_denormals > 3)
+    {
+        NCNN_LOGE("denormals_zero %d not supported", flush_denormals);
+        return -1;
+    }
+#if defined(__SSE3__)
+    if (flush_denormals == 0)
+    {
+        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_OFF);
+        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_OFF);
+    }
+    else if (flush_denormals == 1)
+    {
+        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_OFF);
+    }
+    else if (flush_denormals == 2)
+    {
+        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_OFF);
+        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+    }
+    else if (flush_denormals == 3)
+    {
+        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+    }
+
+    tls_flush_denormals.set(reinterpret_cast<void*>((size_t)flush_denormals));
+    return 0;
+#else
+    return 0;
 #endif
 }
 

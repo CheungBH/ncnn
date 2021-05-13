@@ -8,9 +8,11 @@ name: "CodeQL"
 on:
   push:
     branches: [master]
+    paths-ignore: ['**.md']
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [master]
+    paths-ignore: ['**.md']
   schedule:
     - cron: '0 20 * * 4'
 
@@ -29,6 +31,10 @@ jobs:
         # https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#overriding-automatic-language-detection
 
     steps:
+    - name: cancel-previous-runs
+      uses: styfle/cancel-workflow-action@0.7.0
+      with:
+        access_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Checkout repository
       uses: actions/checkout@v2
       with:

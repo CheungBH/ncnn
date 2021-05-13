@@ -244,9 +244,15 @@ static std::vector<float> get_operation_attr_af(const mlir::Operation& _operatio
 
 int main(int argc, char** argv)
 {
+    if (!(argc == 2 || argc == 4))
+    {
+        fprintf(stderr, "Usage: %s [mlir] [ncnnparam] [ncnnbin]\n", argv[0]);
+        return -1;
+    }
+
     const char* mlirpath = argv[1];
-    const char* ncnn_prototxt = argc >= 4 ? argv[2] : "ncnn.param";
-    const char* ncnn_modelbin = argc >= 4 ? argv[3] : "ncnn.bin";
+    const char* ncnn_prototxt = argc == 4 ? argv[2] : "ncnn.param";
+    const char* ncnn_modelbin = argc == 4 ? argv[3] : "ncnn.bin";
 
     mlir::MLIRContext context;
 
@@ -262,7 +268,11 @@ int main(int argc, char** argv)
 
     // Add a run of the canonicalizer to optimize the mlir module.
     pm.addNestedPass<mlir::FuncOp>(mlir::createCanonicalizerPass());
-    pm.run(*m);
+    if (pm.run(*m).failed())
+    {
+        fprintf(stderr, "canonicalizer pass failed\n");
+        return -1;
+    }
 
     //     m->dump();
 
@@ -506,6 +516,8 @@ int main(int argc, char** argv)
             fprintf(pp, " 1=%d", (int)shape[0]);
             fprintf(pp, " 2=%d", (int)shape[2]);
         }
+
+        fprintf(pp, "\n");
 
         std::vector<float> v = get_attr_af(M);
 
@@ -765,7 +777,10 @@ int main(int argc, char** argv)
             fprintf(pp, "%-16s", op.c_str());
         }
 
-        fprintf(pp, " op_%d %d %d", opid, num_input, num_output);
+        char opid_name[64];
+        sprintf(opid_name, "op_%d", opid);
+
+        fprintf(pp, " %-24s %d %d", opid_name, num_input, num_output);
 
         for (int i = 0; i < (int)operation.getNumOperands(); i++)
         {

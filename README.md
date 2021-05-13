@@ -46,30 +46,31 @@ ncnn 是一个为手机端极致优化的高性能神经网络前向计算框架
 ### Support most commonly used CNN network
 ### 支持大部分常用的 CNN 网络
 
-* Classical CNN: VGG AlexNet GoogleNet Inception ...
-* Practical CNN: ResNet DenseNet SENet FPN ...
-* Light-weight CNN: SqueezeNet MobileNetV1/V2/V3 ShuffleNetV1/V2 MNasNet ...
-* Face Detection: MTCNN RetinaFace ...
-* Detection: VGG-SSD MobileNet-SSD SqueezeNet-SSD MobileNetV2-SSDLite MobileNetV3-SSDLite ...
-* Detection: Faster-RCNN R-FCN ...
-* Detection: YOLOV2 YOLOV3 MobileNet-YOLOV3 YOLOV4 YOLOV5 ...
-* Segmentation: FCN PSPNet UNet YOLACT ...
-* Pose Estimation: SimplePose ...
+* Classical CNN: [VGG](https://github.com/BVLC/caffe/wiki/Model-Zoo#models-used-by-the-vgg-team-in-ilsvrc-2014) [AlexNet](https://github.com/BVLC/caffe/tree/9b891540183ddc834a02b2bd81b31afae71b2153/models/bvlc_alexnet) [GoogleNet](https://github.com/BVLC/caffe/tree/9b891540183ddc834a02b2bd81b31afae71b2153/models/bvlc_googlenet) Inception ...
+* Practical CNN: [ResNet](https://github.com/tornadomeet/ResNet) [DenseNet](https://github.com/liuzhuang13/DenseNet) [SENet](https://github.com/hujie-frank/SENet) [FPN](https://github.com/unsky/FPN) ...
+* Light-weight CNN: [SqueezeNet](https://github.com/forresti/SqueezeNet) [MobileNetV1](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md)/[V2/V3](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet/README.md) [ShuffleNetV1](https://github.com/farmingyard/ShuffleNet)/[V2](https://github.com/opconty/keras-shufflenetV2) [MNasNet](https://github.com/tensorflow/models/tree/master/research/slim/nets/nasnet) ...
+* Face Detection: [MTCNN](https://github.com/ipazc/mtcnn) [RetinaFace](https://github.com/biubug6/Pytorch_Retinaface) ...
+* Detection: [VGG-SSD](https://github.com/lzx1413/CAFFE_SSD) [MobileNet-SSD](https://github.com/chuanqi305/MobileNet-SSD) [SqueezeNet-SSD](https://github.com/chuanqi305/SqueezeNet-SSD) [MobileNetV2-SSDLite](https://github.com/chuanqi305/MobileNetv2-SSDLite) [MobileNetV3-SSDLite](https://github.com/XiaoyuHuang96/MobilenetV3SSDLite-tfkeras) ...
+* Detection: [Faster-RCNN](https://github.com/rbgirshick/py-faster-rcnn) [R-FCN](https://github.com/daijifeng001/R-FCN) ...
+* Detection: [YOLOV2](https://github.com/longcw/yolo2-pytorch) [YOLOV3](https://github.com/ultralytics/yolov3) [MobileNet-YOLOV3](https://github.com/eric612/MobileNet-YOLO) [YOLOV4](https://github.com/Tianxiaomo/pytorch-YOLOv4) [YOLOV5](https://github.com/ultralytics/yolov5) ...
+* Detection: [NanoDet](https://github.com/RangiLyu/nanodet)
+* Segmentation: [FCN](https://github.com/unsky/FPN) [PSPNet](https://github.com/hszhao/PSPNet) [UNet](https://github.com/zhixuhao/unet) [YOLACT](https://github.com/dbolya/yolact) ...
+* Pose Estimation: [SimplePose](https://github.com/dog-qiuqiu/Ultralight-SimplePose) ...
 
 ---
 
 ### HowTo
 
-**[how to build ncnn library](https://github.com/Tencent/ncnn/wiki/how-to-build) on Linux / Windows / Raspberry Pi3 / Android / NVIDIA Jetson / iOS**
+**[how to build ncnn library](https://github.com/Tencent/ncnn/wiki/how-to-build) on Linux / Windows / MacOS / Raspberry Pi3 / Android / NVIDIA Jetson / iOS / WebAssembly**
 
 * [Build for Linux / NVIDIA Jetson / Raspberry Pi3](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-linux)
 * [Build for Windows x64 using VS2017](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-windows-x64-using-visual-studio-community-2017)
-* [Build for MacOSX](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-macosx)
+* [Build for MacOS](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-macos)
 * [Build for ARM Cortex-A family with cross-compiling](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-arm-cortex-a-family-with-cross-compiling)
 * [Build for Hisilicon platform with cross-compiling](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-hisilicon-platform-with-cross-compiling)
 * [Build for Android](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-android)
-* [Build for iOS on MacOSX with xcode](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-ios-on-macosx-with-xcode)
-* [Build for iOS on Linux with cctools-port](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-ios-on-linux-with-cctools-port)
+* [Build for iOS on MacOS with xcode](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-ios-on-macos-with-xcode)
+* [Build for WebAssembly](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-webassembly)
 
 **[download prebuild binary package for android and ios](https://github.com/Tencent/ncnn/releases)**
 
@@ -79,7 +80,7 @@ ncnn 是一个为手机端极致优化的高性能神经网络前向计算框架
 
 **[use netron for ncnn model visualization](https://netron.app)**
 
-**[out-of-the-box online model conversion](https://convertmodel.com/)**
+**[out-of-the-box web model conversion](https://convertmodel.com/#outputFormat=ncnn)**
 
 [ncnn low-level operation api](https://github.com/Tencent/ncnn/wiki/low-level-operation-api)
 
@@ -105,7 +106,7 @@ ncnn 是一个为手机端极致优化的高性能神经网络前向计算框架
 
 * Supports convolutional neural networks, supports multiple input and multi-branch structure, can calculate part of the branch
 * No third-party library dependencies, does not rely on BLAS / NNPACK or any other computing framework
-* Pure C ++ implementation, cross-platform, supports android, ios and so on
+* Pure C++ implementation, cross-platform, supports android, ios and so on
 * ARM NEON assembly level of careful optimization, calculation speed is extremely high
 * Sophisticated memory management and data structure design, very low memory footprint
 * Supports multi-core parallel computing acceleration, ARM big.LITTLE cpu scheduling optimization

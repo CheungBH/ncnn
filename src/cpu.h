@@ -55,6 +55,13 @@ NCNN_EXPORT int cpu_support_arm_asimdhp();
 // avx2 = x86_64 avx2 + fma + f16c
 NCNN_EXPORT int cpu_support_x86_avx2();
 
+// v = riscv vector
+NCNN_EXPORT int cpu_support_riscv_v();
+// zfh = riscv half-precision float
+NCNN_EXPORT int cpu_support_riscv_zfh();
+// vlenb = riscv vector length in bytes
+NCNN_EXPORT int cpu_riscv_vlenb();
+
 // cpu info
 NCNN_EXPORT int get_cpu_count();
 NCNN_EXPORT int get_little_cpu_count();
@@ -88,6 +95,15 @@ NCNN_EXPORT int get_omp_thread_num();
 
 NCNN_EXPORT int get_kmp_blocktime();
 NCNN_EXPORT void set_kmp_blocktime(int time_ms);
+
+// need to flush denormals on Intel Chipset.
+// Other architectures such as ARM can be added as needed.
+// 0 = DAZ OFF, FTZ OFF
+// 1 = DAZ ON , FTZ OFF
+// 2 = DAZ OFF, FTZ ON
+// 3 = DAZ ON,  FTZ ON
+NCNN_EXPORT int get_flush_denormals();
+NCNN_EXPORT int set_flush_denormals(int flush_denormals);
 
 } // namespace ncnn
 
